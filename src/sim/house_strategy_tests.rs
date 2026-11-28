@@ -1135,6 +1135,33 @@ fn ai_nearest_enemy_key_is_on_outside_the_campaign_unless_set() {
     assert!(!off.general.ai_nearest_enemy_in(false));
 }
 
+/// A free-for-all skirmish or online match with no rules setting the key: a
+/// computer house takes the nearest base, not the first house (the human's).
+#[test]
+fn an_unset_skirmish_picks_the_nearest_enemy() {
+    let rules = RuleSet::from_ini(&IniFile::from_str("")).unwrap();
+    for (mode, expected) in [
+        (crate::sim::scenario_session::ScenarioGameMode::Skirmish, 2),
+        (crate::sim::scenario_session::ScenarioGameMode::Lan, 2),
+        (crate::sim::scenario_session::ScenarioGameMode::Wol, 2),
+    ] {
+        let (mut sim, names) = houses_with_bases();
+        sim.session.set_game_mode(mode);
+        building_strategy(
+            &mut sim,
+            &rules,
+            names[1],
+            None,
+            &mut crate::sim::world::FrameEffects::default(),
+        );
+        assert_eq!(
+            sim.houses[&names[1]].enemy_house(),
+            Some(names[expected]),
+            "{mode:?}"
+        );
+    }
+}
+
 #[test]
 fn ai_nearest_enemy_search_picks_the_nearest_base_instead_of_the_first_house() {
     for (nearest, expected) in [(false, 0), (true, 2)] {
