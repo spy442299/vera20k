@@ -61,6 +61,8 @@ fn rules() -> RuleSet {
     for building in ["FACTORY", "PLAIN"] {
         rules.set_buildup_control_for_test(building, [0, 17, 3]);
     }
+    // The original's enemy choice, which the native rows pin.
+    rules.general.ai_nearest_enemy = Some(false);
     rules
 }
 
@@ -1122,11 +1124,15 @@ fn houses_with_bases() -> (Simulation, Vec<InternedId>) {
 }
 
 #[test]
-fn ai_nearest_enemy_key_reads_off_by_default() {
-    let off = RuleSet::from_ini(&IniFile::from_str("[General]\n")).unwrap();
-    assert!(!off.general.ai_nearest_enemy);
+fn ai_nearest_enemy_key_is_on_outside_the_campaign_unless_set() {
+    let unset = RuleSet::from_ini(&IniFile::from_str("[General]\n")).unwrap();
+    assert_eq!(unset.general.ai_nearest_enemy, None);
+    assert!(unset.general.ai_nearest_enemy_in(false));
+    assert!(!unset.general.ai_nearest_enemy_in(true));
     let on = RuleSet::from_ini(&IniFile::from_str("[General]\nAINearestEnemy=yes\n")).unwrap();
-    assert!(on.general.ai_nearest_enemy);
+    assert!(on.general.ai_nearest_enemy_in(true));
+    let off = RuleSet::from_ini(&IniFile::from_str("[General]\nAINearestEnemy=no\n")).unwrap();
+    assert!(!off.general.ai_nearest_enemy_in(false));
 }
 
 #[test]
